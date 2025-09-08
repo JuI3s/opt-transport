@@ -1,4 +1,9 @@
 import numpy as np
+from utils.param import ConvergenceMaxIterations, ConvergenceTolerance
+
+class SinkhornParameters:
+    convergence_criteria: ConvergenceMaxIterations | ConvergenceTolerance
+    
 
 
 def assert_doubly_stochastic(mat: np.ndarray):
@@ -19,7 +24,19 @@ def sinkhorn_iteration(mat: np.ndarray) -> np.ndarray:
     return mat
 
 
-def sinkhorn_algorithm(mat: np.ndarray, max_iterations: int = 1000) -> np.ndarray:
-    for _ in range(max_iterations):
-        mat = sinkhorn_iteration(mat)
+def sinkhorn_algorithm(mat: np.ndarray, parameters: SinkhornParameters) -> np.ndarray:
+    num_iterations = 0
+
+    while True:
+        mat_old, mat = mat, sinkhorn_iteration(mat)
+        num_iterations += 1
+
+        match parameters.convergence_criteria:
+            case ConvergenceMaxIterations(num_iterations=max_num_iterations):
+                if num_iterations >= max_num_iterations:
+                    break
+            case ConvergenceTolerance(err=err):
+                if np.linalg.norm(mat - mat_old) < err:
+                    break
+
     return mat
