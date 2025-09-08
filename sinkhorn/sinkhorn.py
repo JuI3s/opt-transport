@@ -1,8 +1,14 @@
 import numpy as np
 from utils.param import ConvergenceMaxIterations, ConvergenceTolerance
+from dataclasses import dataclass
 
+import logging
+logger = logging.getLogger(__name__)
+
+@dataclass
 class SinkhornParameters:
     convergence_criteria: ConvergenceMaxIterations | ConvergenceTolerance
+    num_iterations_to_log: int = 100
     
 
 
@@ -32,11 +38,22 @@ def sinkhorn_iteration(mat: np.ndarray) -> np.ndarray:
 
 
 def sinkhorn_algorithm(mat: np.ndarray, parameters: SinkhornParameters) -> np.ndarray:
+    """
+    Perform the Sinkhorn algorithm.
+    param:
+        mat: np.ndarray, the input matrix
+        parameters: SinkhornParameters, the parameters for the Sinkhorn algorithm
+    return:
+        np.ndarray
+    """
     num_iterations = 0
 
     while True:
         mat_old, mat = mat, sinkhorn_iteration(mat)
         num_iterations += 1
+
+        if num_iterations % parameters.num_iterations_to_log == 0:
+            logger.debug(f"Sinkhorn iteration {num_iterations}: {mat}")
 
         match parameters.convergence_criteria:
             case ConvergenceMaxIterations(num_iterations=max_num_iterations):

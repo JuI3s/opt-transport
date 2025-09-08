@@ -9,5 +9,3 @@ def test_sinkhorn_is_fixed_point_for_doubly_stochastic_matrix():
     B = sinkhorn_iteration(deepcopy(A))
     assert_doubly_stochastic(B)
     assert np.allclose(A, B)
-
-
