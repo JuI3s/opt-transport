@@ -26,11 +26,22 @@ def entropy_regularized_opt_transport_dual_dist(
     return:
         np.ndarray, the entropy regularized optimal transport dual distance
     """
-    convergence_criteria = ConvergenceMaxIterations(
-        num_iterations=DEFAULT_NUM_ITERATIONS
+    param = SinkhornParameters(
+        convergence_criteria=ConvergenceMaxIterations(
+            num_iterations=DEFAULT_NUM_ITERATIONS
+        )
     )
 
     K = np.exp(-M * lmbda)
-    P = sinkhorn_algorithm(K, r, c, convergence_criteria)
+    P = sinkhorn_algorithm(K, r, c, param)
 
-    return -entropy(P) / lmbda + np.dot(P, M)
+    mat_loss = np.sum(P * M)
+    print(f"M: {M}")
+    print(f"P: {P}")
+    print(f"P * M: {np.sum(P * M)}")
+    print(f"mat_loss: {mat_loss}")
+    print(f"log: {np.log(P)}")
+    print(f"P: {P}")
+    print(f"entropy(P): {entropy(P)}")
+
+    return -entropy(P) / lmbda + np.sum(P * M)

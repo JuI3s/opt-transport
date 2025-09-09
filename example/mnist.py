@@ -1,8 +1,10 @@
 from torchvision import datasets, transforms
 import torch
 import torch.nn as nn
+import numpy as np
 
 
+from sinkhorn.opt_transport import entropy_regularized_opt_transport_dual_dist
 from utils.const import DATA_DIR
 
 
@@ -94,14 +96,37 @@ class SinkhornLoss(nn.Module):
         raise NotImplementedError
 
 
+def optimal_transport_cost_mat(img_dim: int):
+    cost = np.zeros((img_dim**2, img_dim**2))
+    for i in range(img_dim**2):
+        x = i % img_dim
+        y = i // img_dim
+        for j in range(img_dim**2):
+            x2 = j % img_dim
+            y2 = j // img_dim
+            cost[i, j] = np.linalg.norm((x - x2, y - y2))
+    return cost
+
+
 if __name__ == "__main__":
     mnist_train, mnist_test = load_mnist()
     print(mnist_train.data.shape)
     print(mnist_test.data.shape)
 
     train_loader, test_loader = get_mnist_loaders()
+    cost = None
 
     for i, [img, label] in enumerate(train_loader):
-        print(img[0].shape)
+        img1, img2 = img[0], img[1]
+
+        if cost is None:
+            cost = optimal_transport_cost_mat(int(np.sqrt(img1.shape[0])))
+
+        entropy_reg_dist = entropy_regularized_opt_transport_dual_dist(
+            img1, img2, cost, 2
+        )
+        print(entropy_reg_dist)
+        print(entropy_reg_dist.shape)
+
         if i >= 0:
             break
