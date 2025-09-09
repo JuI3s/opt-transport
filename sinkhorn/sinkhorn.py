@@ -3,13 +3,14 @@ from utils.param import ConvergenceMaxIterations, ConvergenceTolerance
 from dataclasses import dataclass
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class SinkhornParameters:
     convergence_criteria: ConvergenceMaxIterations | ConvergenceTolerance
     num_iterations_to_log: int = 100
-    
 
 
 def assert_doubly_stochastic(mat: np.ndarray):
@@ -24,9 +25,9 @@ def assert_doubly_stochastic(mat: np.ndarray):
 
 def sinkhorn_iteration(mat: np.ndarray) -> np.ndarray:
     """
-    Perform one Sinkhorn iteration. Simply scale the rows and columns (in that sequence) of the matrix to sum up to 1. 
+    Perform one Sinkhorn iteration. Simply scale the rows and columns (in that sequence) of the matrix to sum up to 1.
     param:
-        mat: np.ndarray, the input matrix 
+        mat: np.ndarray, the input matrix
     return:
         np.ndarray, the scaled matrix after one Sinkhorn iteration
     """
@@ -41,6 +42,7 @@ def sinkhorn_algorithm(mat: np.ndarray, parameters: SinkhornParameters) -> np.nd
     """
     Perform the Sinkhorn algorithm.
     Original paper: https://msp.org/pjm/1967/21-2/pjm-v21-n2-p14-s.pdf.
+    Cuturi's paper on application to optimal transport: https://papers.nips.cc/paper_files/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf
     param:
         mat: np.ndarray, the input matrix
         parameters: SinkhornParameters, the parameters for the Sinkhorn algorithm
