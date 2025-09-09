@@ -38,7 +38,9 @@ def sinkhorn_iteration(mat: np.ndarray) -> np.ndarray:
     return mat
 
 
-def sinkhorn_algorithm(mat: np.ndarray, parameters: SinkhornParameters) -> np.ndarray:
+def sinkhorn_algorithm(
+    mat: np.ndarray, r: np.ndarray, c: np.ndarray, parameters: SinkhornParameters
+) -> np.ndarray:
     """
     Perform the Sinkhorn algorithm.
     Original paper: https://msp.org/pjm/1967/21-2/pjm-v21-n2-p14-s.pdf.
@@ -49,6 +51,7 @@ def sinkhorn_algorithm(mat: np.ndarray, parameters: SinkhornParameters) -> np.nd
     return:
         np.ndarray
     """
+    # TODO: implement version that involves r and c
     num_iterations = 0
 
     while True:

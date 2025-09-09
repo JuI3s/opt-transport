@@ -1,5 +1,7 @@
 from torchvision import datasets, transforms
 import torch
+import torch.nn as nn
+
 
 from utils.const import DATA_DIR
 
@@ -77,6 +79,19 @@ def get_mnist_loaders(
         mnist_test, batch_size=batch_size, shuffle=False, num_workers=num_workers
     )
     return train_loader, test_loader
+
+
+class SinkhornLoss(nn.Module):
+    """
+    Optimal transport based loss function.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+
+    def forward(self, input, target):
+        raise NotImplementedError
 
 
 if __name__ == "__main__":
