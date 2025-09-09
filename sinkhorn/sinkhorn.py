@@ -23,7 +23,7 @@ def assert_doubly_stochastic(mat: np.ndarray):
     pass
 
 
-def sinkhorn_iteration(mat: np.ndarray) -> np.ndarray:
+def sinkhorn_rescale(mat: np.ndarray) -> np.ndarray:
     """
     Perform one Sinkhorn iteration. Simply scale the rows and columns (in that sequence) of the matrix to sum up to 1.
     param:
@@ -68,7 +68,6 @@ def sinkhorn_algorithm(
 
     while True:
         (u, v, old_u, old_v) = (r / mat @ v, c / mat.T @ u, u, v)
-        mat_old, mat = mat, sinkhorn_iteration(mat)
         num_iterations += 1
 
         if num_iterations % parameters.num_iterations_to_log == 0:

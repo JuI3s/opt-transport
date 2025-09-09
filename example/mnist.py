@@ -105,8 +105,3 @@ if __name__ == "__main__":
         print(img[0].shape)
         if i >= 0:
             break
-    # Get first five images from train_loader
-    # first_batch = next(iter(train_loader))
-    # images, labels = first_batch
-    # first_five_images = images[:5]
-    # print("First five images shape:", first_five_images.shape)
