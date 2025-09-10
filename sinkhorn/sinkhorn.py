@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SinkhornParameters:
     convergence_criteria: ConvergenceMaxIterations | ConvergenceTolerance
-    num_iterations_to_log: int = 100
+    num_iterations_to_log: int = 50
 
 
 def assert_doubly_stochastic(mat: np.ndarray):
@@ -54,20 +54,18 @@ def sinkhorn_algorithm(
     assert len(mat.shape) == 2, "Matrix must be 2D"
     assert mat.shape[0] == len(
         r
-    ), "Matrix must have the same number of rows as the number of elements in r"
+    ), f"Matrix must have the same number of rows as the number of elements in r, {mat.shape[0]} != {len(r)}"
     assert mat.shape[1] == len(
         c
-    ), "Matrix must have the same number of columns as the number of elements in c"
-    assert mat.shape[0] == mat.shape[1], "Matrix must be square"
+    ), f"Matrix must have the same number of columns as the number of elements in c, {mat.shape[1]} != {len(c)}"
 
     num_iterations = 0
-
-    # TODO better initialization
-    u, v = np.random.rand(mat.shape[0]), np.random.rand(mat.shape[1])
-    old_u, old_v = None, None
+    u, old_u = np.ones(mat.shape[0]), None
 
     while True:
-        (u, v, old_u, old_v) = (r / mat @ v, c / mat.T @ u, u, v)
+        mat_tilde = np.diag(1.0 / r) @ mat
+        u, old_u = 1 / (mat_tilde @ (c / (mat.T @ u))), u
+
         num_iterations += 1
 
         if num_iterations % parameters.num_iterations_to_log == 0:
@@ -79,7 +77,8 @@ def sinkhorn_algorithm(
                     break
             case ConvergenceTolerance(err=err):
                 # TODO: implement better convergence criteria in Cuturi's paper
-                if np.linalg.norm(u - old_u) < err and np.linalg.norm(v - old_v) < err:
+                if np.linalg.norm(u - old_u) < err:
                     break
 
-    return mat
+    v = c / (mat.T @ u)
+    return np.diag(u) @ mat @ np.diag(v)

@@ -23,14 +23,11 @@ def load_mnist() -> tuple[datasets.MNIST, datasets.MNIST]:
     return mnist_train, mnist_test
 
 
-class PerImageNormalize(object):
+class ImageToDistribution(object):
     def __call__(self, tensor):
-        # tensor shape: [C, H, W]
-        mean = tensor.mean()
-        std = tensor.std()
-        if std == 0:
-            std = 1.0
-        return ((tensor - mean) / std).flatten().squeeze()
+        low = tensor.min()
+        sum = tensor.sum()
+        return ((tensor - low) / sum).flatten().squeeze()
 
 
 def get_mnist_loaders(
@@ -57,7 +54,7 @@ def get_mnist_loaders(
         transform = transforms.Compose(
             [
                 transforms.ToTensor(),
-                PerImageNormalize(),
+                ImageToDistribution(),
             ]
         )
 
@@ -123,10 +120,17 @@ if __name__ == "__main__":
             cost = optimal_transport_cost_mat(int(np.sqrt(img1.shape[0])))
 
         entropy_reg_dist = entropy_regularized_opt_transport_dual_dist(
-            img1, img2, cost, 2
-        )
+            img1.numpy(), img2.numpy(), cost, 9
+        )        
+        print("--------------------------------")
         print(entropy_reg_dist)
-        print(entropy_reg_dist.shape)
+        print("label 1:", label[0], "label 2:", label[1])
+        entropy_reg_dist = entropy_regularized_opt_transport_dual_dist(
+            img1.numpy(), img1.numpy(), cost, 9
+        )
+        print("--------------------------------")
+        print(entropy_reg_dist)
+        print("label 1:", label[0], "label 2:", label[0])
 
-        if i >= 0:
+        if i >= 5:
             break

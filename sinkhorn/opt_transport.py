@@ -5,7 +5,7 @@ from sinkhorn.sinkhorn import SinkhornParameters, sinkhorn_algorithm
 from utils.param import ConvergenceMaxIterations
 
 
-DEFAULT_NUM_ITERATIONS = 100
+DEFAULT_NUM_ITERATIONS = 20
 
 
 def entropy_regularized_opt_transport_dual_dist(
@@ -32,16 +32,8 @@ def entropy_regularized_opt_transport_dual_dist(
         )
     )
 
-    K = np.exp(-M * lmbda)
-    P = sinkhorn_algorithm(K, r, c, param)
+    non_zero_indices = r > 0
+    K = np.exp(-M[non_zero_indices, :] * lmbda)
+    P = sinkhorn_algorithm(K, r[non_zero_indices], c, param)
 
-    mat_loss = np.sum(P * M)
-    print(f"M: {M}")
-    print(f"P: {P}")
-    print(f"P * M: {np.sum(P * M)}")
-    print(f"mat_loss: {mat_loss}")
-    print(f"log: {np.log(P)}")
-    print(f"P: {P}")
-    print(f"entropy(P): {entropy(P)}")
-
-    return -entropy(P) / lmbda + np.sum(P * M)
+    return np.sum(P * M[non_zero_indices, :])
