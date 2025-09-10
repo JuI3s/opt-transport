@@ -4,7 +4,7 @@ Example of using the MNIST dataset with the optimal transport loss function.
 
 from torchvision import datasets, transforms
 import torch
-import torch.nn as nn
+from torch import nn
 import numpy as np
 
 
