@@ -8,7 +8,6 @@ import torch.nn as nn
 import numpy as np
 
 
-from sinkhorn.opt_transport import entropy_regularized_opt_transport_dual_dist
 from utils.const import DATA_DIR
 
 
@@ -119,30 +118,3 @@ def optimal_transport_cost_mat(img_dim: int):
             y2 = j // img_dim
             cost[i, j] = np.linalg.norm((x - x2, y - y2))
     return cost
-
-
-if __name__ == "__main__":
-    train, test = get_mnist_loaders()
-    COST_MAT = None
-
-    for i, [img, label] in enumerate(train):
-        img1, img2 = img[0], img[1]
-
-        if COST_MAT is None:
-            COST_MAT = optimal_transport_cost_mat(int(np.sqrt(img1.shape[0])))
-
-        entropy_reg_dist = entropy_regularized_opt_transport_dual_dist(
-            img1.numpy(), img2.numpy(), COST_MAT, 9
-        )
-        print("--------------------------------")
-        print(entropy_reg_dist)
-        print("label 1:", label[0], "label 2:", label[1])
-        entropy_reg_dist = entropy_regularized_opt_transport_dual_dist(
-            img1.numpy(), img1.numpy(), COST_MAT, 9
-        )
-        print("--------------------------------")
-        print(entropy_reg_dist)
-        print("label 1:", label[0], "label 2:", label[0])
-
-        if i >= 5:
-            break

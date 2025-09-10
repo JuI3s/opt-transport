@@ -8,7 +8,7 @@ from sinkhorn.sinkhorn import SinkhornParameters, sinkhorn_algorithm
 from utils.param import ConvergenceMaxIterations
 
 
-DEFAULT_NUM_ITERATIONS = 20
+_DEFAULT_NUM_ITERATIONS = 20
 
 
 def entropy_regularized_opt_transport_dual_dist(
@@ -32,12 +32,20 @@ def entropy_regularized_opt_transport_dual_dist(
     """
     param = SinkhornParameters(
         convergence_criteria=ConvergenceMaxIterations(
-            num_iterations=DEFAULT_NUM_ITERATIONS
+            num_iterations=_DEFAULT_NUM_ITERATIONS
         )
     )
 
-    non_zero_indices = r > 0
-    k_mat = np.exp(-m[non_zero_indices, :] * lmbda)
-    p_mat = sinkhorn_algorithm(k_mat, r[non_zero_indices], c, param)
+    r_non_zero_indices = np.argwhere(r > 0).squeeze()
+    c_non_zero_indices = np.argwhere(c > 0).squeeze()
 
-    return np.sum(p_mat * m[non_zero_indices, :])
+    select_m = m[np.ix_(r_non_zero_indices, c_non_zero_indices)]
+    k_mat = np.exp(-select_m * lmbda)
+    p_mat = sinkhorn_algorithm(
+        k_mat, r[r_non_zero_indices], c[c_non_zero_indices], param
+    )
+    assert (
+        p_mat.shape == k_mat.shape
+    ), f"p_mat shape: {p_mat.shape}, k_mat shape: {k_mat.shape}"
+
+    return np.sum(p_mat * select_m)
