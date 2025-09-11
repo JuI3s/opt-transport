@@ -4,9 +4,9 @@ Sinkhorn algorithm.
 
 from dataclasses import dataclass
 import logging
-
-
 import numpy as np
+import torch
+
 from utils.param import ConvergenceMaxIterations, ConvergenceTolerance
 
 
@@ -48,6 +48,57 @@ def sinkhorn_rescale(mat: np.ndarray) -> np.ndarray:
     col_sums = mat.sum(axis=0)
     mat /= col_sums[:, np.newaxis]
     return mat
+
+
+def sinkhorn_algorithm_torch(
+    mat: torch.Tensor, r: torch.Tensor, c: torch.Tensor, parameters: SinkhornParameters
+) -> np.ndarray:
+    """
+    Perform the Sinkhorn algorithm.
+    Original paper: https://msp.org/pjm/1967/21-2/pjm-v21-n2-p14-s.pdf.
+    Cuturi's paper on application to optimal transport:
+    https://papers.nips.cc/paper_files/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf
+    param:
+        mat: np.ndarray, the input matrix
+        r: np.ndarray, the source distribution which has positive elements
+        c: np.ndarray, the target distribution which has positive elements
+        parameters: SinkhornParameters, the parameters for the Sinkhorn algorithm
+    return:
+        np.ndarray
+    """
+    assert torch.all(r > 0), "r must have positive elements"
+    assert torch.all(c > 0), "c must have positive elements"
+    assert mat.dim() == 2, "Matrix must be 2D"
+    assert (
+        mat.shape[0] == r.shape[0]
+    ), "Matrix must have the same number of rows as the number of elements in r"
+    assert (
+        mat.shape[1] == c.shape[0]
+    ), "Matrix must have the same number of columns as the number of elements in c"
+
+    num_iterations = 0
+    u, old_u = torch.ones(mat.shape[0]), None
+
+    while True:
+        mat_tilde = torch.diag(1.0 / r) @ mat
+        u, old_u = 1 / (mat_tilde @ (c / (mat.T @ u))), u
+
+        num_iterations += 1
+
+        if num_iterations % parameters.num_iterations_to_log == 0:
+            logger.debug("Sinkhorn iteration: %s, u: %s", num_iterations, u)
+
+        match parameters.convergence_criteria:
+            case ConvergenceMaxIterations(num_iterations=max_num_iterations):
+                if num_iterations >= max_num_iterations:
+                    break
+            case ConvergenceTolerance(err=err):
+                # TODO: implement better convergence criteria in Cuturi's paper
+                if torch.norm(u - old_u) < err:
+                    break
+
+    v = c / (mat.T @ u)
+    return torch.diag(u) @ mat @ torch.diag(v)
 
 
 def sinkhorn_algorithm(
