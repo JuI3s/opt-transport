@@ -8,6 +8,7 @@ from torch import nn
 import numpy as np
 
 
+from sinkhorn.opt_transport import entropy_regularized_opt_transport_dual_dist
 from utils.const import DATA_DIR
 
 
@@ -27,6 +28,65 @@ def load_mnist() -> tuple[datasets.MNIST, datasets.MNIST]:
     )
 
     return mnist_train, mnist_test
+
+
+class MNISTClassifier:
+    """
+    MNIST classifier.
+    """
+
+    def __init__(
+        self,
+        train_dataset: datasets.MNIST,
+        num_imgs_per_label: int = 10,
+        lmbda: float = 9,
+    ):
+        train_imgs = {}
+        num_filled = 0
+        img_dim = None
+
+        for img, label in train_dataset:
+            img = img[0, :]
+            label = label[0]
+            if img_dim is None:
+                img_dim = int(np.sqrt(img.shape[0]))
+
+            img_list = train_imgs.get(label, [])
+            if len(img_list) >= num_imgs_per_label:
+                continue
+
+            img_list.append(img)
+            if len(img_list) >= num_imgs_per_label:
+                num_filled += 1
+
+            train_imgs[label] = img_list
+            if num_filled >= num_imgs_per_label:
+                break
+
+        self.train_imgs = train_imgs
+        self.cost_mat = optimal_transport_cost_mat(img_dim)
+        self.lmbda = lmbda
+
+    def classify(self, img: torch.Tensor) -> int:
+        """
+        Classify an image.
+        """
+        img = img[0, :]
+
+        opt_dist = {
+            label: np.mean(
+                [
+                    entropy_regularized_opt_transport_dual_dist(
+                        img.numpy(), train_img.numpy(), self.cost_mat, self.lmbda
+                    )
+                    for train_img in train_imgs
+                ]
+            )
+            for label, train_imgs in self.train_imgs.items()
+        }
+        print(f"opt_dist: {opt_dist}")
+
+        return min(opt_dist, key=opt_dist.get)
 
 
 class ImageToDistribution:
@@ -106,9 +166,6 @@ class SinkhornLoss(nn.Module):
 
 
 def optimal_transport_cost_mat(img_dim: int):
-    """
-    Compute the optimal transport cost matrix.
-    """
     cost = np.zeros((img_dim**2, img_dim**2))
     for i in range(img_dim**2):
         x = i % img_dim

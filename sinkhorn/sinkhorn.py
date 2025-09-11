@@ -60,10 +60,14 @@ def sinkhorn_algorithm(
     https://papers.nips.cc/paper_files/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf
     param:
         mat: np.ndarray, the input matrix
+        r: np.ndarray, the source distribution which has positive elements
+        c: np.ndarray, the target distribution which has positive elements
         parameters: SinkhornParameters, the parameters for the Sinkhorn algorithm
     return:
         np.ndarray
     """
+    assert np.all(r > 0), "r must have positive elements"
+    assert np.all(c > 0), "c must have positive elements"
     assert len(mat.shape) == 2, "Matrix must be 2D"
     assert mat.shape[0] == len(
         r
